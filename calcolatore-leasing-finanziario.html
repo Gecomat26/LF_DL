@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calcolatore Leasing Finanziario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --card:#ffffff; --ink:#14213d; --muted:#5b6780; --line:#d9dfe8;
+  --navy:#12295a; --navy-ink:#ffffff; --accent:#1f4fb4; --soft:#f5f7fb; --danger:#b3261e;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1424; --card:#151f37; --ink:#e8ecf5; --muted:#9aa7c2; --line:#26324f;
+    --navy:#1b3a7a; --navy-ink:#ffffff; --accent:#7aa2f7; --soft:#1a2542; --danger:#ff8a80;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1424; --card:#151f37; --ink:#e8ecf5; --muted:#9aa7c2; --line:#26324f;
+  --navy:#1b3a7a; --navy-ink:#ffffff; --accent:#7aa2f7; --soft:#1a2542; --danger:#ff8a80;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 48px}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+header.top h1{font-family:var(--serif);font-weight:600;font-size:26px;letter-spacing:-.01em;margin:0;color:var(--ink)}
+header.top p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card + .card{margin-top:20px}
+.card h2{font-size:15px;font-weight:600;margin:0 0 14px;color:var(--ink)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:13px;color:var(--muted);font-weight:500}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:9px 11px;width:100%;min-height:40px}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input.invalid{border-color:var(--danger)}
+.hint{font-size:12px;color:var(--muted)}
+.err{font-size:12px;color:var(--danger);min-height:0}
+.amount{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+details{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+summary{cursor:pointer;font-weight:500;color:var(--accent);font-size:14px;padding:4px 0}
+details[open] summary{margin-bottom:12px}
+.hero{background:var(--navy);color:var(--navy-ink);border-radius:10px;padding:22px 22px 20px}
+.hero .lbl{font-size:13px;opacity:.8}
+.hero .big{font-family:var(--serif);font-size:44px;font-weight:600;letter-spacing:-.02em;line-height:1.1;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.hero .sub{font-size:13px;opacity:.8}
+dl.res{margin:0}
+dl.res .r{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--line)}
+dl.res .r:last-child{border-bottom:0}
+dl.res dt{color:var(--muted)}
+dl.res dd{margin:0;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+dl.res .r.total{border-top:2px solid var(--ink);border-bottom:0;margin-top:4px;padding-top:12px}
+dl.res .r.total dt{color:var(--ink);font-weight:600}
+dl.res .r.total dd{font-weight:600;font-size:17px}
+.btn{font:inherit;font-weight:600;border:0;border-radius:8px;padding:13px 18px;cursor:pointer;background:var(--accent);color:#fff;width:100%;font-size:15px}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+#printMsg{font-size:12px;color:var(--muted);margin:8px 0 0;min-height:16px}
+.theme{font:inherit;font-size:13px;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:7px;padding:6px 10px;cursor:pointer}
+.empty{color:var(--muted);font-size:14px}
+
+/* ---------- Documento di stampa (una sola pagina A4) ---------- */
+.doc{display:none}
+.doc.measuring{display:block;position:absolute;left:-10000px;top:0;width:186mm;visibility:hidden}
+.doc .doc-inner{color:#14213d;font-family:"IBM Plex Sans",Arial,sans-serif;font-size:10pt;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.doc h1,.doc h2,.doc .num{font-family:"IBM Plex Serif",Georgia,serif}
+.doc .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #12295a;padding-bottom:8pt;margin-bottom:12pt}
+.doc .brand{font-size:15pt;font-weight:600;color:#12295a}
+.doc .brand small{display:block;font-size:9pt;font-weight:400;color:#5b6780}
+.doc .meta{text-align:right;font-size:9.5pt;color:#5b6780}
+.doc .meta b{color:#14213d}
+.doc h1{font-size:18pt;margin:0 0 8pt;color:#12295a;font-weight:600}
+.doc h2{font-size:11pt;margin:12pt 0 5pt;color:#12295a;font-weight:600;border-bottom:1px solid #d9dfe8;padding-bottom:3pt}
+.doc .client{display:grid;grid-template-columns:1fr 1fr;gap:4pt 18pt}
+.doc .client div span{display:block;font-size:8.5pt;color:#5b6780}
+.doc table{width:100%;border-collapse:collapse}
+.doc td{padding:4pt 0;border-bottom:1px solid #e6eaf1;vertical-align:top}
+.doc td:last-child{text-align:right;font-weight:500;white-space:nowrap}
+.doc .key{margin:12pt 0 2pt;background:#12295a !important;color:#fff;padding:10pt 14pt;border-radius:4pt;display:flex;justify-content:space-between;align-items:baseline}
+.doc .key .num{font-size:22pt;font-weight:600}
+.doc .key small{font-size:14pt;font-weight:600;opacity:1}
+.doc tr.tot td{border-top:2px solid #14213d;border-bottom:0;font-weight:600;font-size:11.5pt;padding-top:7pt}
+.doc .note{font-size:8.5pt;color:#5b6780;margin-top:10pt}
+.doc .sign{display:grid;grid-template-columns:1fr 1fr;gap:36pt;margin-top:24pt}
+.doc .sign div{border-top:1px solid #14213d;padding-top:4pt;font-size:9pt;color:#5b6780;min-height:46pt}
+.doc .sign p{margin:0 0 6pt;font-size:9.5pt;color:#14213d;font-weight:500}
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  html,body{background:#fff !important;margin:0 !important;padding:0 !important;height:auto !important}
+  :root{padding:0 !important}
+  .no-print,.wrap{display:none !important}
+  .doc{display:block;width:100%;max-height:270mm;overflow:hidden;break-inside:avoid;page-break-inside:avoid;page-break-after:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap no-print">
+  <header class="top">
+    <div>
+      <h1>Calcolatore Leasing Finanziario</h1>
+      <p>Simula il canone e stampa il preventivo per il cliente. Importi IVA esclusa.</p>
+    </div>
+    <button class="theme" id="themeBtn" type="button" aria-label="Cambia tema">Tema scuro</button>
+  </header>
+
+  <div class="grid">
+    <div>
+      <section class="card">
+        <h2>Dati dell'operazione</h2>
+        <div class="field">
+          <label for="importo">Importo della fornitura (€, IVA esclusa)</label>
+          <input id="importo" type="text" inputmode="decimal" value="635.000" autocomplete="off">
+          <div class="err" id="errImporto"></div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="durata">Durata del leasing</label>
+            <select id="durata">
+              <option value="24">24 mesi</option>
+              <option value="36">36 mesi</option>
+              <option value="48">48 mesi</option>
+              <option value="60" selected>60 mesi</option>
+              <option value="72">72 mesi</option>
+              <option value="84">84 mesi</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="periodo">Periodicità dei canoni</label>
+            <select id="periodo">
+              <option value="1" selected>Mensile</option>
+              <option value="3">Trimestrale</option>
+              <option value="6">Semestrale</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="anticipo">Anticipo alla firma (%)</label>
+            <input id="anticipo" type="text" inputmode="decimal" value="10">
+            <div class="err" id="errAnticipo"></div>
+          </div>
+          <div class="field">
+            <label for="riscatto">Valore di riscatto (% della fornitura)</label>
+            <input id="riscatto" type="text" inputmode="decimal" value="1">
+            <div class="err" id="errRiscatto"></div>
+          </div>
+        </div>
+
+        <details>
+          <summary>Tasso, assicurazione e spese</summary>
+          <div class="row">
+            <div class="field">
+              <label for="tipoTasso">Tipo di tasso</label>
+              <select id="tipoTasso">
+                <option value="idx" selected>Indicizzato (Euribor 3 mesi lettera)</option>
+                <option value="fix">Fisso (IRS della durata)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="base" id="baseLbl">Euribor 3 mesi lettera (%)</label>
+              <input id="base" type="text" inputmode="decimal" value="2">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="spread">Spread (%)</label>
+              <input id="spread" type="text" inputmode="decimal" value="2,5">
+            </div>
+            <div class="field">
+              <label for="assic">Assicurazione</label>
+              <select id="assic">
+                <option value="0">Nessuna</option>
+                <option value="1">All Risks, guasti el. e mecc. compresi (1,043%)</option>
+                <option value="2">Furto e incendio, guasti compresi (0,879%)</option>
+                <option value="3" selected>Furto e incendio, guasti esclusi (0,588%)</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="spIncasso">Spese incasso per canone (€)</label>
+              <input id="spIncasso" type="text" inputmode="decimal" value="4,5">
+            </div>
+            <div class="field">
+              <label for="istruttoria">Spese di istruttoria (€)</label>
+              <input id="istruttoria" type="text" inputmode="decimal" value="300">
+            </div>
+          </div>
+          <div class="field">
+            <label for="intest">Intestazione del preventivo</label>
+            <input id="intest" type="text" placeholder="Es. ragione sociale che emette il preventivo">
+          </div>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2>Dati del cliente <span class="hint">(facoltativi)</span></h2>
+        <div class="field">
+          <label for="ragione">Ragione sociale</label>
+          <input id="ragione" type="text" autocomplete="organization">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="referente">Referente</label>
+            <input id="referente" type="text" autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" autocomplete="email">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="concess">Concessionario</label>
+          <input id="concess" type="text">
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="hero" aria-live="polite">
+        <div class="lbl" id="heroLbl">Canone mensile (IVA esclusa)</div>
+        <div class="big" id="heroVal">—</div>
+        <div class="sub" id="heroSub">Inserisci l'importo della fornitura</div>
+      </section>
+
+      <section class="card" style="margin-top:20px">
+        <h2>Riepilogo dei costi</h2>
+        <dl class="res" id="res"><p class="empty">I risultati compaiono qui.</p></dl>
+      </section>
+
+      <div style="margin-top:20px">
+        <button class="btn" id="printBtn" type="button">Stampa Preventivo PDF</button>
+        <p id="printMsg">Nella finestra di stampa scegli «Salva come PDF».</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Documento stampabile -->
+<div class="doc" id="doc" aria-hidden="true"></div>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var eur = new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',useGrouping:'always'});
+  var pct = function(x){return (x*100).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:3})+'%'};
+  var esc = function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+
+  var PERIODI = {1:'mensile',3:'trimestrale',6:'semestrale'};
+  var PERIODI_PL = {1:'mensili',3:'trimestrali',6:'semestrali'};
+  var ASSIC = {
+    0:{rate:0,name:'Nessuna'},
+    1:{rate:0.01043,name:'All Risks, guasti elettrici e meccanici compresi'},
+    2:{rate:0.00879,name:'Furto e incendio, guasti elettrici e meccanici compresi'},
+    3:{rate:0.00588,name:'Furto e incendio, guasti elettrici e meccanici esclusi'}
+  };
+
+  var euribor = '2', irs = '0';
+  var d = new Date();
+  var numPrev = 'PRV-' + d.getFullYear() + '-' + String(Math.floor(1000 + Math.random()*9000));
+  var dataOggi = d.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+
+  function parseNum(s){
+    s = String(s).replace(/[€%\s]/g,'');
+    if(!s) return NaN;
+    if(s.indexOf(',')>-1){ s = s.replace(/\./g,'').replace(',','.'); }
+    else if(/^\d{1,3}(\.\d{3})+$/.test(s)){ s = s.replace(/\./g,''); }
+    var n = Number(s);
+    return isFinite(n) ? n : NaN;
+  }
+
+  // Stessa logica di PMT di Excel: pagamento periodico posticipato
+  function pmt(r,n,pv,fv){
+    if(r===0) return -(pv+fv)/n;
+    var f = Math.pow(1+r,n);
+    return -(pv*f+fv)*r/(f-1);
+  }
+
+  function read(){
+    return {
+      V: parseNum($('importo').value),
+      mesi: Number($('durata').value),
+      per: Number($('periodo').value),
+      antP: parseNum($('anticipo').value)/100,
+      risP: parseNum($('riscatto').value)/100,
+      tipo: $('tipoTasso').value,
+      base: parseNum($('base').value)/100,
+      spread: parseNum($('spread').value)/100,
+      assic: Number($('assic').value),
+      spInc: parseNum($('spIncasso').value),
+      istr: parseNum($('istruttoria').value),
+      intest: $('intest').value.trim(),
+      ragione: $('ragione').value.trim(),
+      referente: $('referente').value.trim(),
+      email: $('email').value.trim(),
+      concess: $('concess').value.trim()
+    };
+  }
+
+  function validate(p){
+    var ok = true;
+    function flag(id,errId,cond,msg){
+      $(id).classList.toggle('invalid',cond);
+      $(errId).textContent = cond ? msg : '';
+      if(cond) ok = false;
+    }
+    flag('importo','errImporto', !(p.V>0), "Inserisci un importo maggiore di zero.");
+    flag('anticipo','errAnticipo', !(p.antP>=0 && p.antP<=0.9), "Inserisci una percentuale tra 0 e 90.");
+    flag('riscatto','errRiscatto', !(p.risP>=0 && p.risP<=0.5), "Inserisci una percentuale tra 0 e 50.");
+    ['base','spread','spIncasso','istruttoria'].forEach(function(k){
+      var el = $(k);
+      var v = parseNum(el.value);
+      var bad = isNaN(v) || v<0;
+      el.classList.toggle('invalid',bad);
+      if(bad) ok = false;
+    });
+    return ok;
+  }
+
+  function compute(p){
+    var n = p.mesi/p.per, ppy = 12/p.per;
+    var anticipo = p.V*p.antP;
+    var finanziato = p.V - anticipo;
+    var riscatto = p.V*p.risP;
+    var tasso = p.base + p.spread;
+    var canone = pmt(tasso/ppy, n, -finanziato, riscatto);
+    var ass = (p.V*ASSIC[p.assic].rate*(p.mesi/12))/n;
+    var totPer = canone + ass;
+    return {
+      n:n, anticipo:anticipo, finanziato:finanziato, riscatto:riscatto, tasso:tasso,
+      canone:canone, ass:ass, totPer:totPer,
+      totCanoni: totPer*n,
+      totAss: ass*n,
+      totInc: p.spInc*n
+    };
+  }
+
+  // Adatta il documento a un solo foglio A4 (area utile 186 x 270 mm)
+  function fitToPage(){
+    var doc = $('doc'), inner = doc.firstChild;
+    if(!inner || inner.nodeType!==1) return;
+    inner.style.zoom = '';
+    doc.classList.add('measuring');
+    var h = inner.getBoundingClientRect().height;
+    doc.classList.remove('measuring');
+    var max = 268/25.4*96;
+    if(h > max) inner.style.zoom = (max/h).toFixed(4);
+  }
+  window.addEventListener('beforeprint',fitToPage);
+
+  function row(k,v,cls){ return '<div class="r'+(cls?' '+cls:'')+'"><dt>'+k+'</dt><dd>'+v+'</dd></div>'; }
+
+  function render(){
+    var p = read();
+    var ok = validate(p);
+    var per = PERIODI[p.per];
+    var perCap = per.charAt(0).toUpperCase()+per.slice(1);
+    $('heroLbl').textContent = 'Canone ' + per + ' (IVA esclusa)';
+    $('printBtn').disabled = !ok;
+    if(!ok){
+      $('heroVal').textContent = '—';
+      $('heroSub').textContent = 'Controlla i campi evidenziati';
+      $('res').innerHTML = '<p class="empty">Correggi i campi evidenziati per vedere il riepilogo.</p>';
+      $('doc').innerHTML = '';
+      return;
+    }
+    var c = compute(p);
+    $('heroVal').textContent = eur.format(c.canone);
+    $('heroSub').textContent = c.n + ' canoni ' + PERIODI_PL[p.per] + ' posticipati, durata ' + p.mesi + ' mesi';
+
+    var h = '';
+    h += row('Importo della fornitura', eur.format(p.V));
+    h += row('Anticipo alla firma ('+ (p.antP*100).toLocaleString('it-IT',{maximumFractionDigits:2}) +'%)', eur.format(c.anticipo));
+    h += row('Importo finanziato', eur.format(c.finanziato));
+    h += row('Durata totale', p.mesi + ' mesi');
+    h += row('Numero canoni', c.n + ' ' + PERIODI_PL[p.per]);
+    h += row('Tasso leasing (TAN)', pct(c.tasso));
+    h += row('Canone periodico (IVA esclusa)', eur.format(c.canone));
+    if(p.assic>0) h += row('Assicurazione per canone', eur.format(c.ass));
+    if(p.assic>0) h += row('Totale canone periodico', eur.format(c.totPer));
+    if(p.spInc>0) h += row('Spese incasso per canone', eur.format(p.spInc));
+    h += row('Valore di riscatto', eur.format(c.riscatto));
+    h += row('Spese di istruttoria', eur.format(p.istr));
+    h += row('Totale dei canoni' + (p.assic>0?' (assicurazione inclusa)':''), eur.format(c.totCanoni), 'total');
+    $('res').innerHTML = h;
+
+    $('doc').innerHTML = buildDoc(p,c,per,perCap);
+    fitToPage();
+  }
+
+  function buildDoc(p,c,per,perCap){
+    var cli = '';
+    if(p.ragione)   cli += '<div><span>Ragione sociale</span>'+esc(p.ragione)+'</div>';
+    if(p.referente) cli += '<div><span>Referente</span>'+esc(p.referente)+'</div>';
+    if(p.email)     cli += '<div><span>Email</span>'+esc(p.email)+'</div>';
+    if(p.concess)   cli += '<div><span>Concessionario</span>'+esc(p.concess)+'</div>';
+
+    var tr = function(k,v,cls){ return '<tr'+(cls?' class="'+cls+'"':'')+'><td>'+k+'</td><td>'+v+'</td></tr>'; };
+    var cond = '';
+    cond += tr('Importo della fornitura', eur.format(p.V));
+    cond += tr('Anticipo alla firma del contratto', eur.format(c.anticipo));
+    cond += tr('Importo finanziato', eur.format(c.finanziato));
+    cond += tr('Durata dell\'operazione', p.mesi + ' mesi');
+    cond += tr('Canoni periodici posticipati', c.n + ' ' + PERIODI_PL[p.per]);
+    cond += tr('Tipo di tasso', p.tipo==='idx' ? 'Indicizzato (Euribor 3 mesi lettera '+pct(p.base)+' + spread '+pct(p.spread)+')' : 'Fisso (IRS '+pct(p.base)+' + spread '+pct(p.spread)+')');
+    cond += tr('Tasso leasing (TAN)', pct(c.tasso));
+    cond += tr('Opzione di acquisto finale', eur.format(c.riscatto));
+    cond += tr('Spese di istruttoria', eur.format(p.istr));
+
+    var eco = '';
+    eco += tr('Canone ' + per + ' (IVA esclusa)', eur.format(c.canone));
+    if(p.assic>0) eco += tr('Assicurazione per canone<br><span style="font-size:8.5pt;color:#5b6780;font-weight:400">'+ASSIC[p.assic].name+'</span>', eur.format(c.ass));
+    if(p.assic>0) eco += tr('Importo totale canone periodico', eur.format(c.totPer));
+    if(p.spInc>0) eco += tr('Spese incasso per canone', eur.format(p.spInc));
+    eco += tr('Numero canoni', String(c.n));
+    eco += tr('Totale dei canoni (IVA esclusa)', eur.format(c.totCanoni), 'tot');
+
+    return '<div class="doc-inner">'
+    + '<div class="head">'
+    +   '<div class="brand">'+(p.intest ? esc(p.intest)+'<small>Leasing finanziario</small>' : 'Leasing finanziario')+'</div>'
+    +   '<div class="meta">Preventivo n. <b>'+numPrev+'</b><br>Data: <b>'+dataOggi+'</b></div>'
+    + '</div>'
+    + '<h1>Preventivo di leasing finanziario</h1>'
+    + (cli ? '<section><h2>Cliente</h2><div class="client">'+cli+'</div></section>' : '')
+    + '<div class="key"><div><small>Canone '+per+' (IVA esclusa)</small></div><div class="num">'+eur.format(c.canone)+'</div></div>'
+    + '<section><h2>Condizioni dell\'operazione</h2><table>'+cond+'</table></section>'
+    + '<section><h2>Riepilogo economico</h2><table>'+eco+'</table></section>'
+    + '<p class="note">Importi espressi in euro e al netto di IVA. Il presente preventivo ha valore indicativo, non costituisce proposta contrattuale ed è subordinato all\'approvazione della società di leasing.</p>'
+    + '<div class="sign"><div><p>Per accettazione</p>Timbro e firma del cliente</div><div><p>Data e luogo</p>&nbsp;</div></div>'
+    + '</div>';
+  }
+
+  // Eventi
+  ['importo','durata','periodo','anticipo','riscatto','base','spread','assic','spIncasso','istruttoria','intest','ragione','referente','email','concess']
+    .forEach(function(id){ $(id).addEventListener('input',render); $(id).addEventListener('change',render); });
+
+  $('tipoTasso').addEventListener('change',function(){
+    var toFix = this.value==='fix';
+    if(toFix){ euribor = $('base').value; $('base').value = irs; $('baseLbl').textContent = 'IRS relativo alla durata (%)'; }
+    else     { irs = $('base').value; $('base').value = euribor; $('baseLbl').textContent = 'Euribor 3 mesi lettera (%)'; }
+    render();
+  });
+
+  $('importo').addEventListener('blur',function(){
+    var v = parseNum(this.value);
+    if(v>0) this.value = v.toLocaleString('it-IT',{maximumFractionDigits:2,useGrouping:'always'});
+  });
+
+  $('printBtn').addEventListener('click',function(){
+    var m = $('printMsg');
+    try{
+      render();
+      fitToPage();
+      window.print();
+      m.textContent = 'Nella finestra di stampa scegli «Salva come PDF».';
+    }catch(e){
+      m.textContent = 'Il browser ha bloccato la stampa da questa pagina. Apri la pagina in una scheda a sé e riprova.';
+    }
+  });
+
+  // Tema
+  var root = document.documentElement;
+  $('themeBtn').addEventListener('click',function(){
+    var dark = getComputedStyle(root).getPropertyValue('--bg').trim() === '#0d1424';
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+    this.textContent = dark ? 'Tema scuro' : 'Tema chiaro';
+  });
+  if(getComputedStyle(root).getPropertyValue('--bg').trim() === '#0d1424') $('themeBtn').textContent = 'Tema chiaro';
+
+  render();
+})();
+</script>
+</body>
+</html>
